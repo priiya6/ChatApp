@@ -1,0 +1,275 @@
+# COMPLETE SETUP GUIDE — Convo Chat App
+# ==========================================
+# Follow every step in order. Do NOT skip any.
+# ==========================================
+
+
+# ──────────────────────────────────────────
+# SECTION 1: INSTALL PREREQUISITES
+# ──────────────────────────────────────────
+
+## Step 1: Install Node.js
+
+1. Go to https://nodejs.org
+2. Download the "LTS" version (e.g. Node 20)
+3. Run the installer, click through all defaults
+4. Verify: open your terminal and run:
+     node -v    # should print v20.x.x
+     npm -v     # should print 10.x.x
+
+
+## Step 2: Install Android Studio (for APK only)
+
+1. Go to https://developer.android.com/studio
+2. Download and install Android Studio
+3. On first launch, run the Setup Wizard → accept all defaults
+4. It will download Android SDK automatically
+5. After install, go to More Actions → SDK Manager
+   → SDK Platforms tab → check Android 13 (API 33) → Apply
+6. Set ANDROID_HOME env variable:
+   - Windows: Search "Environment Variables" → New system var:
+       Name: ANDROID_HOME
+       Value: C:\Users\<you>\AppData\Local\Android\Sdk
+   - Mac/Linux: add to ~/.bashrc or ~/.zshrc:
+       export ANDROID_HOME=$HOME/Android/Sdk
+       export PATH=$PATH:$ANDROID_HOME/platform-tools
+
+
+# ──────────────────────────────────────────
+# SECTION 2: CREATE YOUR SUPABASE PROJECT
+# ──────────────────────────────────────────
+
+## Step 3: Create a Supabase Account and Project
+
+1. Go to https://supabase.com → Sign Up (free)
+2. Click "New Project"
+3. Choose a name (e.g. "convo-chat"), set a DB password, pick a region
+4. Wait ~2 minutes for provisioning
+
+
+## Step 4: Create the Database Tables
+
+1. In your Supabase project → click "SQL Editor" in the left sidebar
+2. Click "New Query"
+3. Paste the ENTIRE SQL block from README.md (Section "Run this SQL")
+4. Click "Run"
+5. You should see "Success. No rows returned."
+
+
+## Step 5: Enable Realtime on the Messages Table
+
+1. Left sidebar → Database → Replication
+2. Find the "messages" table
+3. Toggle it ON (turns green)
+4. This enables live message broadcasting
+
+
+## Step 6: Create Two Test Users
+
+1. Left sidebar → Authentication → Users → "Invite User" OR
+2. Use the SQL Editor to sign up via Supabase Auth API, OR
+3. Easiest: run your app locally, go to the login screen,
+   and use Supabase's email sign-up (you can enable it in
+   Authentication → Providers → Email → disable "Confirm email"
+   for testing so you don't need to verify)
+
+To disable email confirmation for testing:
+   Authentication → Providers → Email → toggle OFF "Confirm email"
+
+4. Sign up user A (e.g. alice@test.com / password123)
+5. Sign up user B (e.g. bob@test.com / password123)
+6. Copy their UUIDs from Authentication → Users table
+
+
+## Step 7: Insert Test Conversation
+
+In SQL Editor, run the test data SQL from README.md,
+replacing USER_A_UUID_HERE and USER_B_UUID_HERE with the
+actual UUIDs from the previous step.
+
+
+## Step 8: Get Your API Keys
+
+1. Left sidebar → Settings → API
+2. Copy:
+   - "Project URL" (looks like: https://abcdef.supabase.co)
+   - "anon public" key (a long JWT string)
+3. Keep this tab open — you'll need these next
+
+
+# ──────────────────────────────────────────
+# SECTION 3: SET UP THE CODE
+# ──────────────────────────────────────────
+
+## Step 9: Get the Code
+
+Option A — Clone from Git (if in a repo):
+  git clone <your-repo-url>
+  cd convo-chat-app
+
+Option B — Copy the files manually to a folder named convo-chat-app
+
+
+## Step 10: Install Dependencies
+
+Open terminal in the project folder:
+  npm install
+
+This downloads all libraries into node_modules/ (~200MB, normal)
+
+
+## Step 11: Set Up Environment Variables
+
+1. Copy the example file:
+     cp .env.example .env   (Mac/Linux)
+     copy .env.example .env (Windows)
+
+2. Open .env in any text editor
+3. Paste your keys:
+     VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+     VITE_SUPABASE_ANON_KEY=your-anon-key-here
+
+4. Save the file
+
+
+## Step 12: Run the App Locally
+
+  npm run dev
+
+Open http://localhost:5173 in your browser.
+
+Test:
+  - Log in as alice@test.com
+  - You should see a chat with Bob
+  - Click it and send a message
+  - Open another browser tab, log in as bob@test.com
+  - The message should appear in real-time!
+
+
+# ──────────────────────────────────────────
+# SECTION 4: BUILD THE ANDROID APK
+# ──────────────────────────────────────────
+
+## Step 13: Build the Web App
+
+  npm run build
+
+This creates a dist/ folder with the compiled files.
+
+
+## Step 14: Add Android Platform (First Time Only)
+
+  npx cap add android
+
+This creates an android/ folder.
+
+
+## Step 15: Sync to Android
+
+  npx cap sync
+
+This copies dist/ into the Android project.
+
+
+## Step 16: Open in Android Studio
+
+  npx cap open android
+
+Android Studio will open. Wait for "Gradle sync" to finish
+(progress bar at bottom). This can take 2-5 minutes.
+
+
+## Step 17: Build the APK
+
+1. In Android Studio menu: Build → Build Bundle(s)/APK(s) → Build APK(s)
+2. Wait for build to complete (progress at bottom)
+3. Click "Locate" in the popup, OR find it at:
+     android/app/build/outputs/apk/debug/app-debug.apk
+
+4. Install on a real Android device:
+   - Enable "Developer Options" on your phone
+     (Settings → About Phone → tap "Build number" 7 times)
+   - Enable "USB Debugging" in Developer Options
+   - Connect phone via USB
+   - In Android Studio: Run → Run 'app' → select your device
+
+   OR just copy the .apk to your phone and install it directly
+   (you may need to allow "Install from unknown sources")
+
+
+# ──────────────────────────────────────────
+# SECTION 5: FINAL VERIFICATION CHECKLIST
+# ──────────────────────────────────────────
+
+Before submitting, verify ALL of these:
+
+AUTHENTICATION:
+  □ Login works with correct credentials
+  □ Wrong password shows "Incorrect email or password."
+  □ Empty field shows HTML5 validation (required)
+  □ Login button shows spinner while loading
+  □ After login, redirected to /chats
+  □ Logout button signs out and goes to /login
+  □ Visiting /chats when logged out redirects to /login
+
+CHAT LIST:
+  □ Shows all conversations of logged-in user
+  □ Shows other person's name
+  □ Shows last message preview (with "You: " prefix if you sent it)
+  □ Shows relative timestamp (e.g. "2m", "Mon")
+  □ Skeleton loading shown before data arrives
+  □ Empty state shown if no conversations
+
+CHAT SCREEN:
+  □ Your messages appear on the RIGHT (purple)
+  □ Their messages appear on the LEFT (white)
+  □ Messages have timestamps
+  □ Your messages show status: ○ sending → ✓ sent
+  □ New message appears instantly (optimistic UI)
+  □ Other user's message appears WITHOUT refreshing (Realtime)
+  □ Typing indicator appears when other user types
+  □ Auto-scrolls to newest message
+  □ Empty state shown if no messages yet
+  □ Back button returns to chat list
+
+GENERAL:
+  □ No console errors in browser devtools
+  □ .env file is NOT committed to git (check .gitignore)
+  □ App works on mobile screen size (check in Chrome DevTools → mobile view)
+  □ APK installs and runs on Android
+
+
+# ──────────────────────────────────────────
+# SECTION 6: WHAT MAKES THIS IMPRESSIVE
+# ──────────────────────────────────────────
+
+Here's what you can highlight to your recruiter:
+
+1. OPTIMISTIC UI
+   Messages appear instantly on send — before the server confirms.
+   This is what WhatsApp, iMessage, etc. do. The message gets
+   replaced with the confirmed version silently.
+
+2. REALTIME SUBSCRIPTIONS
+   Uses Supabase's Postgres CDC (Change Data Capture) — not polling.
+   The server pushes changes to the client over WebSocket.
+
+3. TYPING INDICATOR
+   Uses Supabase Broadcast (ephemeral WebSocket events, not stored in DB)
+   — the correct and efficient way to do presence/typing.
+
+4. MEMOIZED COMPONENTS
+   MessageBubble is wrapped in React.memo — prevents re-renders
+   of old messages when a new one arrives.
+
+5. PROTECTED ROUTES
+   Proper auth-gating — unauthenticated users are redirected,
+   and there's no flash of protected content.
+
+6. RLS (Row Level Security)
+   Supabase policies ensure users can ONLY see their own conversations
+   and messages — security at the database level, not just the app.
+
+7. CLEAN COMPONENT ARCHITECTURE
+   Each component has a single responsibility. Business logic is in
+   pages, reusable UI is in components, data access is in lib/.
